@@ -1,0 +1,4 @@
+repository "MemoRISE/MemoRISE@18967185555347@cloud"
+  path "/"
+    br "/main"
+    co "/main"
