@@ -35,23 +35,23 @@ public class LevelManager : MonoBehaviour
     {
         for (int i = 0; i < platformCount; i++)
         {
-            // Random X and Y offsets
-            float randomX = Random.Range(-randomRangeX, randomRangeX);
-            float randomY = Random.Range(-randomRangeY, randomRangeY);
+            // Random X ve Y pozisyonu sadece pozitif yönde
+            float randomX = Random.Range(0f, randomRangeX);
+            float randomY = Random.Range(0f, randomRangeY);
 
-            // New random spawn position
+            // Yeni pozisyon
             Vector2 spawnPosition = startPosition + new Vector2(randomX, randomY);
 
-            // Instantiate platform
+            // Platform oluþtur
             GameObject platform = Instantiate(platformPrefab, spawnPosition, Quaternion.identity);
             platform.name = $"Platform_{i + 1}";
 
-            // Apply reveal duration if PlatformReveal exists
+            // PlatformReveal süresini ata
             PlatformReveal reveal = platform.GetComponent<PlatformReveal>();
             if (reveal != null)
                 reveal.revealDuration = revealDuration;
         }
 
-        Debug.Log($"Created {platformCount} platforms at random positions (X±{randomRangeX}, Y±{randomRangeY}).");
+        Debug.Log($"Created {platformCount} platforms at random positions (+X, +Y from start).");
     }
 }
