@@ -1,0 +1,53 @@
+﻿using UnityEngine;
+
+// Bu ScriptableObject, her seviye için gerekli bilgileri tutar
+// Inspector'dan kolayca düzenlenebilir seviye veri dosyaları oluşturmamızı sağlar
+[CreateAssetMenu(fileName = "Level_01", menuName = "MemoRISE/Level Data", order = 1)]
+public class LevelData : ScriptableObject
+{
+    [Header("Seviye Bilgileri")]
+    [Tooltip("Seviyenin adı (örn: Level 1, Tutorial)")]
+    public string levelName = "Level 1";
+
+    [Tooltip("Seviye numarası")]
+    public int levelNumber = 1;
+
+    [Header("Platform Ayarları")]
+    [Tooltip("Bu seviyede kaç platform olacak")]
+    public int platformCount = 5;
+
+    [Tooltip("Platformlar kaç saniye görünür kalacak")]
+    public float revealDuration = 5f;
+
+    [Tooltip("Platformlar arası minimum mesafe")]
+    public float minSpacing = 2f;
+
+    [Tooltip("Platformlar arası maksimum mesafe")]
+    public float maxSpacing = 4f;
+
+    [Header("Alan Sınırları")]
+    [Tooltip("Platformların oluşturulacağı X ekseni minimum değeri")]
+    public float minX = 0f;
+
+    [Tooltip("Platformların oluşturulacağı X ekseni maksimum değeri")]
+    public float maxX = 20f;
+
+    [Tooltip("Platformların oluşturulacağı Y ekseni minimum değeri")]
+    public float minY = -3f;
+
+    [Tooltip("Platformların oluşturulacağı Y ekseni maksimum değeri")]
+    public float maxY = 3f;
+
+    [Header("Zorluk Ayarları")]
+    [Tooltip("Bu seviyeyi tamamlamak için süre limiti var mı?")]
+    public bool hasTimeLimit = false;
+
+    [Tooltip("Süre limiti (saniye)")]
+    public float timeLimit = 60f;
+
+    [Tooltip("Oyuncunun başlangıç pozisyonu")]
+    public Vector2 playerStartPosition = new Vector2(-5f, 0f);
+
+    [Tooltip("Bitiş noktası pozisyonu")]
+    public Vector2 finishPosition = new Vector2(25f, 0f);
+}
