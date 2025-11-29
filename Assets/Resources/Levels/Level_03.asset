@@ -12,17 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b45786aaec771484d84bb3128766e945, type: 3}
   m_Name: Level_03
   m_EditorClassIdentifier: Assembly-CSharp::LevelData
-  levelName: Level 1
-  levelNumber: 1
-  platformCount: 5
-  revealDuration: 5
+  levelName: Level 3
+  levelNumber: 3
+  platformCount: 12
+  revealDuration: 3
   minSpacing: 2
   maxSpacing: 4
   minX: 0
-  maxX: 20
+  maxX: 30
   minY: -3
   maxY: 3
-  hasTimeLimit: 0
-  timeLimit: 60
+  hasTimeLimit: 1
+  timeLimit: 45
   playerStartPosition: {x: -5, y: 0}
   finishPosition: {x: 25, y: 0}

@@ -1,103 +1,162 @@
-using UnityEngine;
-using System.Collections.Generic;
+﻿using UnityEngine;
 
-/// <summary>
-/// Automatically generates platforms in random positions (+X, +Y)
-/// and applies reveal duration settings for each platform.
-/// Minimum distance between platforms is maintained.
-/// </summary>
+// Bu script, LevelData ScriptableObject'lerini kullanarak seviyeleri yonetir
+// Seviyeleri yukler, platformlari olusturur ve oyun akisini kontrol eder
 public class LevelManager : MonoBehaviour
 {
-    [Header("Platform Settings")]
-    [Tooltip("Platform prefab to be created")]
-    public GameObject platformPrefab; // Platform prefab reference
+    [Header("Seviye Sistemi")]
+    [Tooltip("Yuklenecek seviye verisi")]
+    public LevelData currentLevel;
 
-    [Tooltip("Number of platforms to create")]
-    public int platformCount = 5; // Total platforms to spawn
+    [Header("Prefab Referanslari")]
+    [Tooltip("Platform prefab referansi")]
+    public GameObject platformPrefab;
 
-    [Header("Random Position Settings")]
-    [Tooltip("Maximum random offset on X axis from start position (+X only)")]
-    public float randomRangeX = 5f; // Max X offset for random placement
+    [Tooltip("Oyuncu prefab referansi (opsiyonel)")]
+    public GameObject playerPrefab;
 
-    [Tooltip("Maximum random offset on Y axis from start position (+Y only)")]
-    public float randomRangeY = 2f; // Max Y offset for random placement
+    [Header("Debug")]
+    [Tooltip("Platform olusturma surecini console'da goster")]
+    public bool showDebugLogs = true;
 
-    [Tooltip("Minimum distance between platforms")]
-    public float minDistance = 1.5f; // Inspector adjustable minimum distance
+    private GameObject playerInstance; // Sahnedeki oyuncu referansi
 
-    [Header("Reveal Settings")]
-    [Tooltip("How many seconds platforms stay visible when scene starts")]
-    public float revealDuration = 5f; // Platform visible duration
-
-    [Tooltip("Center position where random placement starts")]
-    public Vector2 startPosition = new Vector2(0, 0); // Starting point for placement
-
-    /// <summary>
-    /// Unity Start method: called once when scene starts
-    /// </summary>
     private void Start()
     {
-        GeneratePlatforms(); // Generate all platforms at start
+        // Seviye verisi kontrol
+        if (currentLevel == null)
+        {
+            Debug.LogError("LevelManager: currentLevel atanmamis! Inspector'dan bir LevelData ata.");
+            return;
+        }
+
+        if (platformPrefab == null)
+        {
+            Debug.LogError("LevelManager: platformPrefab atanmamis!");
+            return;
+        }
+
+        // Seviyeyi yukle
+        LoadLevel();
     }
 
     /// <summary>
-    /// Generates platforms at random positions (+X, +Y),
-    /// ensures minimum spacing between platforms
+    /// Mevcut seviyeyi yukler: platformlari olusturur, oyuncuyu konumlandirir
+    /// </summary>
+    private void LoadLevel()
+    {
+        if (showDebugLogs)
+        {
+            Debug.Log($"=== {currentLevel.levelName} yukleniyor ===");
+        }
+
+        // Platformlari olustur
+        GeneratePlatforms();
+
+        // Oyuncuyu baslangic pozisyonuna tasi
+        PositionPlayer();
+
+        if (showDebugLogs)
+        {
+            Debug.Log($"✅ {currentLevel.levelName} basariyla yuklendi!");
+        }
+    }
+
+    /// <summary>
+    /// LevelData'daki ayarlara gore platformlari olusturur
     /// </summary>
     private void GeneratePlatforms()
     {
-        List<Vector2> placedPositions = new List<Vector2>(); // Store spawned positions
-
-        for (int i = 0; i < platformCount; i++)
+        for (int i = 0; i < currentLevel.platformCount; i++)
         {
-            Vector2 spawnPosition;
-            int attempts = 0;
-            const int maxAttempts = 100; // Prevent infinite loops
+            // Random pozisyon hesapla (LevelData sinirlari icinde)
+            float randomX = Random.Range(currentLevel.minX, currentLevel.maxX);
+            float randomY = Random.Range(currentLevel.minY, currentLevel.maxY);
+            Vector2 spawnPosition = new Vector2(randomX, randomY);
 
-            // Generate a valid random position
-            do
-            {
-                float randomX = Random.Range(0f, randomRangeX); // Random X offset
-                float randomY = Random.Range(0f, randomRangeY); // Random Y offset
-                spawnPosition = startPosition + new Vector2(randomX, randomY);
-                attempts++;
-            }
-            while (!IsPositionValid(spawnPosition, placedPositions) && attempts < maxAttempts);
-
-            if (attempts >= maxAttempts)
-            {
-                Debug.LogWarning($"Platform {i + 1}: suitable position not found, using last generated position.");
-            }
-
-            // Instantiate the platform at calculated position
+            // Platformu olustur
             GameObject platform = Instantiate(platformPrefab, spawnPosition, Quaternion.identity);
             platform.name = $"Platform_{i + 1}";
 
-            // Apply revealDuration from LevelManager to PlatformReveal script
+            // PlatformReveal script'ini bul ve ayarlari uygula
             PlatformReveal reveal = platform.GetComponent<PlatformReveal>();
             if (reveal != null)
-                reveal.revealDuration = revealDuration;
+            {
+                reveal.revealDuration = currentLevel.revealDuration;
+            }
 
-            // Add position to list for future distance checks
-            placedPositions.Add(spawnPosition);
+            // Platformu LevelManager altina organize et (Hierarchy'de duzgun gozuksun)
+            platform.transform.SetParent(this.transform);
         }
 
-        Debug.Log($"Created {platformCount} platforms at random positions (+X, +Y) with minDistance {minDistance}.");
+        if (showDebugLogs)
+        {
+            Debug.Log($"  → {currentLevel.platformCount} platform olusturuldu (Gorunme suresi: {currentLevel.revealDuration}s)");
+        }
     }
 
     /// <summary>
-    /// Checks if the new position is far enough from existing platforms
+    /// Oyuncuyu LevelData'daki baslangic pozisyonuna tasir
     /// </summary>
-    /// <param name="newPos">Candidate position</param>
-    /// <param name="existingPositions">Already placed positions</param>
-    /// <returns>True if valid, False if too close</returns>
-    private bool IsPositionValid(Vector2 newPos, List<Vector2> existingPositions)
+    private void PositionPlayer()
     {
-        foreach (Vector2 pos in existingPositions)
+        // Sahnede var olan Player'i bul
+        GameObject existingPlayer = GameObject.FindGameObjectWithTag("Player");
+
+        if (existingPlayer != null)
         {
-            if (Vector2.Distance(newPos, pos) < minDistance)
-                return false; // Too close to existing platform
+            existingPlayer.transform.position = currentLevel.playerStartPosition;
+            playerInstance = existingPlayer;
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"  → Oyuncu baslangic pozisyonuna tasindi: {currentLevel.playerStartPosition}");
+            }
         }
-        return true; // Valid position
+        else if (playerPrefab != null)
+        {
+            // Sahnede Player yoksa ve prefab atanmissa, olustur
+            playerInstance = Instantiate(playerPrefab, currentLevel.playerStartPosition, Quaternion.identity);
+            playerInstance.name = "Player";
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"  → Oyuncu olusturuldu: {currentLevel.playerStartPosition}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("LevelManager: Sahnede Player bulunamadi ve playerPrefab de atanmamis.");
+        }
+    }
+
+    /// <summary>
+    /// Yeni bir seviye yuklemek icin (sonraki seviyeye gecis)
+    /// </summary>
+    public void LoadNewLevel(LevelData newLevel)
+    {
+        // Onceki seviyeyi temizle
+        ClearCurrentLevel();
+
+        // Yeni seviyeyi yukle
+        currentLevel = newLevel;
+        LoadLevel();
+    }
+
+    /// <summary>
+    /// Mevcut seviyeleri temizler (platformlari yok eder)
+    /// </summary>
+    private void ClearCurrentLevel()
+    {
+        // LevelManager altindaki tum platformlari yok et
+        foreach (Transform child in transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        if (showDebugLogs)
+        {
+            Debug.Log("  → Onceki seviye temizlendi.");
+        }
     }
 }

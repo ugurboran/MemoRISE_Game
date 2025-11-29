@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b45786aaec771484d84bb3128766e945, type: 3}
   m_Name: Level_02
   m_EditorClassIdentifier: Assembly-CSharp::LevelData
-  levelName: Level 1
-  levelNumber: 1
-  platformCount: 5
+  levelName: Level 2
+  levelNumber: 2
+  platformCount: 8
   revealDuration: 5
   minSpacing: 2
   maxSpacing: 4

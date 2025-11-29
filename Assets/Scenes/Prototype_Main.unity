@@ -213,12 +213,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 880e465319a089c459a6714c6f4fa4bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelManager
+  currentLevel: {fileID: 11400000, guid: 66f9a73ac827bde44893e81b3cecd7c1, type: 2}
   platformPrefab: {fileID: 74288381361145835, guid: a4e5da07b95f96a4286928a752ef2161, type: 3}
-  platformCount: 5
-  randomRangeX: 5
-  randomRangeY: 2
-  revealDuration: 5
-  startPosition: {x: 0, y: 0}
+  playerPrefab: {fileID: 0}
+  showDebugLogs: 1
 --- !u!4 &868711448
 Transform:
   m_ObjectHideFlags: 0
