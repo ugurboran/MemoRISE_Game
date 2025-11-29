@@ -16,11 +16,12 @@ MonoBehaviour:
   levelNumber: 3
   platformCount: 12
   revealDuration: 3
-  minJumpDistance: 2.5
-  maxJumpDistance: 3
-  maxHeightVariation: 2.5
+  firstPlatformDistance: 1.5
+  minJumpDistance: 2
+  maxJumpDistance: 2
+  maxHeightVariation: 2
   horizontalPath: 1
   hasTimeLimit: 1
   timeLimit: 45
-  playerStartPosition: {x: 0, y: 1}
-  finishPosition: {x: 10, y: 0}
+  playerStartPosition: {x: -5, y: 1}
+  finishOffsetFromLastPlatform: {x: 0, y: 0}

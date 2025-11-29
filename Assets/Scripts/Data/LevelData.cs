@@ -19,6 +19,9 @@ public class LevelData : ScriptableObject
     [Tooltip("Platformlar kaç saniye görünür kalacak")]
     public float revealDuration = 5f;
 
+    [Tooltip("İLK platform Player'dan ne kadar uzakta olacak (zıplanabilir mesafe)")]
+    public float firstPlatformDistance = 2f; // BUNU EKLE
+
     [Tooltip("Platformlar arası minimum mesafe (zıplanabilir)")]
     public float minJumpDistance = 2f;
 
@@ -60,6 +63,6 @@ public class LevelData : ScriptableObject
     [Tooltip("Oyuncunun başlangıç pozisyonu")]
     public Vector2 playerStartPosition = new Vector2(-5f, 0f);
 
-    [Tooltip("Bitiş noktası pozisyonu")]
-    public Vector2 finishPosition = new Vector2(25f, 0f);
+    [Tooltip("Finish Point son platformdan ne kadar uzakta olacak (X, Y offset)")]
+    public Vector2 finishOffsetFromLastPlatform = new Vector2(0f, 0f);
 }

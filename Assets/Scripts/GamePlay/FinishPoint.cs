@@ -36,11 +36,13 @@ public class FinishPoint : MonoBehaviour
             levelCompleted = true; // Tekrar tetiklenmesini engelle
 
             Debug.Log($"✅ {completionMessage}");
+            Debug.Log("[FinishPoint] LevelManager araniyor...");
 
             // LevelManager'i bul ve seviye tamamlandigini bildir
             LevelManager levelManager = FindObjectOfType<LevelManager>();
             if (levelManager != null)
             {
+                Debug.Log("[FinishPoint] LevelManager bulundu, OnLevelComplete() cagiriliyor...");
                 levelManager.OnLevelComplete();
             }
             else
@@ -52,6 +54,19 @@ public class FinishPoint : MonoBehaviour
         {
             Debug.Log($"[FinishPoint] Tag uyumsuz: Beklenen 'Player', gelen '{collision.tag}'");
         }
+        else if (levelCompleted)
+        {
+            Debug.Log("[FinishPoint] Seviye zaten tamamlandi, tekrar tetikleme engellendi.");
+        }
+    }
+
+    /// <summary>
+    /// Yeni seviye yuklendiginde FinishPoint'i sifirlar
+    /// </summary>
+    public void ResetFinishPoint()
+    {
+        levelCompleted = false;
+        Debug.Log("[FinishPoint] Reset edildi, yeni seviye icin hazir.");
     }
 
     // Scene'de finish noktasini gorsellestirmek icin Gizmos

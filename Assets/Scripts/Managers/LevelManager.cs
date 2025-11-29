@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement; // Sahne yonetimi icin
 // Seviyeleri yukler, platformlari olusturur ve oyun akisini kontrol eder
 public class LevelManager : MonoBehaviour
 {
+    
 
     [Header("Seviye Sistemi")]
     [Tooltip("Oyundaki tum seviyeler sirali olarak")]
@@ -14,6 +15,8 @@ public class LevelManager : MonoBehaviour
     public LevelData currentLevel;
 
     private int currentLevelIndex = 0; // Su anki seviye indexi
+
+    private Vector2 lastPlatformPosition; // Son platformun pozisyonunu tutar
 
     [Header("Prefab Referanslari")]
     [Tooltip("Platform prefab referansi")]
@@ -76,13 +79,28 @@ public class LevelManager : MonoBehaviour
 
     /// <summary>
     /// LevelData'daki ayarlara gore platformlari zincir seklinde olusturur
-    /// Her platform bir oncekine ziplanabilir mesafede olur
+    /// Ilk platform Player'dan ziplanabilir mesafede baslar
     /// </summary>
     private void GeneratePlatforms()
     {
-        Vector2 currentPosition = currentLevel.playerStartPosition; // Baslangic pozisyonundan basla
+        // ILK PLATFORM: Player'dan ziplanabilir mesafede olustur
+        Vector2 firstPlatformPosition = CalculateFirstPlatformPosition();
 
-        for (int i = 0; i < currentLevel.platformCount; i++)
+        GameObject firstPlatform = Instantiate(platformPrefab, firstPlatformPosition, Quaternion.identity);
+        firstPlatform.name = "Platform_1";
+
+        PlatformReveal firstReveal = firstPlatform.GetComponent<PlatformReveal>();
+        if (firstReveal != null)
+        {
+            firstReveal.revealDuration = currentLevel.revealDuration;
+        }
+        firstPlatform.transform.SetParent(this.transform);
+
+        // Bir sonraki platform icin referans pozisyonu
+        Vector2 currentPosition = firstPlatformPosition;
+
+        // KALAN PLATFORMLAR: Zincir seklinde olustur
+        for (int i = 1; i < currentLevel.platformCount; i++)
         {
             // Bir sonraki platformun pozisyonunu hesapla
             Vector2 nextPosition = CalculateNextPlatformPosition(currentPosition);
@@ -105,10 +123,47 @@ public class LevelManager : MonoBehaviour
             currentPosition = nextPosition;
         }
 
+        // SON PLATFORMUN pozisyonunu kaydet (Finish Point icin)
+        lastPlatformPosition = currentPosition;
+
         if (showDebugLogs)
         {
             Debug.Log($"  → {currentLevel.platformCount} platform zincir seklinde olusturuldu");
+            Debug.Log($"  → Ilk platform: {firstPlatformPosition}, Son platform: {lastPlatformPosition}");
         }
+    }
+
+    /// <summary>
+    /// Player'dan ziplanabilir mesafede ilk platformun pozisyonunu hesaplar
+    /// </summary>
+    private Vector2 CalculateFirstPlatformPosition()
+    {
+        // Ilk platform icin SABIT, ziplanabilir mesafe kullan
+        float jumpDistance = currentLevel.firstPlatformDistance;
+
+        // Y ekseninde kucuk varyasyon (cok fazla yukari/asagi olmasin)
+        float heightDifference = Random.Range(-0.5f, 0.5f);
+
+        Vector2 firstPosition;
+
+        if (currentLevel.horizontalPath)
+        {
+            // Yatay yol: Player'in saginda
+            firstPosition = new Vector2(
+                currentLevel.playerStartPosition.x + jumpDistance,
+                currentLevel.playerStartPosition.y + heightDifference
+            );
+        }
+        else
+        {
+            // Dikey yol: Player'in ustunde
+            firstPosition = new Vector2(
+                currentLevel.playerStartPosition.x + heightDifference,
+                currentLevel.playerStartPosition.y + jumpDistance
+            );
+        }
+
+        return firstPosition;
     }
 
     /// <summary>
@@ -145,7 +200,7 @@ public class LevelManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Finish noktasini LevelData'daki pozisyona konumlandirir
+    /// Finish noktasini son platformun uzerine/yakinina konumlandirir
     /// </summary>
     private void PositionFinishPoint()
     {
@@ -154,11 +209,20 @@ public class LevelManager : MonoBehaviour
 
         if (finishPoint != null)
         {
-            finishPoint.transform.position = currentLevel.finishPosition;
+            // Son platform pozisyonu + offset
+            Vector2 finishPosition = lastPlatformPosition + currentLevel.finishOffsetFromLastPlatform;
+            finishPoint.transform.position = finishPosition;
+
+            // FinishPoint'i sifirla (yeni seviye icin hazir hale getir)
+            FinishPoint finishScript = finishPoint.GetComponent<FinishPoint>();
+            if (finishScript != null)
+            {
+                finishScript.ResetFinishPoint();
+            }
 
             if (showDebugLogs)
             {
-                Debug.Log($"  → Finish noktasi konumlandirildi: {currentLevel.finishPosition}");
+                Debug.Log($"  → Finish Point son platformun uzerine konumlandirildi: {finishPosition}");
             }
         }
         else
@@ -220,11 +284,18 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     private void ClearCurrentLevel()
     {
+        Debug.Log($"[LevelManager] ClearCurrentLevel() baslatildi. LevelManager altinda {transform.childCount} obje var.");
+
         // LevelManager altindaki tum platformlari yok et
+        int destroyedCount = 0;
         foreach (Transform child in transform)
         {
+            Debug.Log($"[LevelManager] Yok ediliyor: {child.name}");
             Destroy(child.gameObject);
+            destroyedCount++;
         }
+
+        Debug.Log($"[LevelManager] {destroyedCount} platform yok edildi.");
 
         if (showDebugLogs)
         {
@@ -236,12 +307,16 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     public void OnLevelComplete()
     {
+        Debug.Log($"[LevelManager] OnLevelComplete() cagirildi!");
+        Debug.Log($"[LevelManager] Mevcut seviye: {currentLevel.levelName} (Index: {currentLevelIndex})");
+
         if (showDebugLogs)
         {
             Debug.Log($"🎉 {currentLevel.levelName} tamamlandi!");
         }
 
         // Bir sonraki seviyeye gec
+        Debug.Log("[LevelManager] LoadNextLevel() cagiriliyor...");
         LoadNextLevel();
     }
 
@@ -250,11 +325,17 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     private void LoadNextLevel()
     {
+        Debug.Log($"[LevelManager] LoadNextLevel() baslatildi. Mevcut index: {currentLevelIndex}");
+
         currentLevelIndex++; // Index'i artir
+
+        Debug.Log($"[LevelManager] Yeni index: {currentLevelIndex}, Toplam seviye sayisi: {allLevels.Length}");
 
         // Tum seviyeler tamamlandiysa
         if (currentLevelIndex >= allLevels.Length)
         {
+            Debug.Log("[LevelManager] TUM SEVIYELER TAMAMLANDI!");
+
             if (showDebugLogs)
             {
                 Debug.Log("🏆 TUM SEVIYELER TAMAMLANDI!");
@@ -268,14 +349,21 @@ public class LevelManager : MonoBehaviour
         // Sonraki seviyeyi yukle
         currentLevel = allLevels[currentLevelIndex];
 
+        Debug.Log($"[LevelManager] Sonraki seviye secildi: {currentLevel.levelName}");
+
         if (showDebugLogs)
         {
             Debug.Log($"→ Sonraki seviye yukleniyor: {currentLevel.levelName}");
         }
 
         // Eski seviyeyi temizle ve yenisini yukle
+        Debug.Log("[LevelManager] ClearCurrentLevel() cagiriliyor...");
         ClearCurrentLevel();
+
+        Debug.Log("[LevelManager] LoadLevel() cagiriliyor...");
         LoadLevel();
+
+        Debug.Log("[LevelManager] Seviye gecisi tamamlandi!");
     }
 
     /// <summary>
@@ -309,8 +397,11 @@ public class LevelManager : MonoBehaviour
         ClearCurrentLevel();
         LoadLevel();
     }
+
+    
+
     /// <summary>
-    /// Scene view'da platformlar arasi baglantilari goster (Debug)
+    /// Scene view'da platformlar arasi baglantilari ve ozel noktalari goster (Debug)
     /// </summary>
     private void OnDrawGizmos()
     {
@@ -319,12 +410,43 @@ public class LevelManager : MonoBehaviour
         // LevelManager altindaki tum platformlari al
         Transform[] platforms = GetComponentsInChildren<Transform>();
 
-        Gizmos.color = Color.yellow;
+        if (platforms.Length <= 1) return; // LevelManager'in kendisi haric platform yoksa
 
-        // Platformlari sirayla birbirine bagla
+        // Platformlar arasi baglanti cizgileri (Sari)
+        Gizmos.color = Color.yellow;
         for (int i = 1; i < platforms.Length - 1; i++)
         {
             Gizmos.DrawLine(platforms[i].position, platforms[i + 1].position);
+        }
+
+        // ILK PLATFORM (Yesil)
+        if (platforms.Length > 1)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(platforms[1].position, 0.8f);
+        }
+
+        // SON PLATFORM (Kirmizi)
+        if (platforms.Length > 2)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(platforms[platforms.Length - 1].position, 0.8f);
+        }
+
+        // PLAYER → ILK PLATFORM baglantisi (Mavi)
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null && platforms.Length > 1)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawLine(player.transform.position, platforms[1].position);
+        }
+
+        // SON PLATFORM → FINISH baglantisi (Turuncu)
+        GameObject finish = GameObject.FindGameObjectWithTag("Finish");
+        if (finish != null && platforms.Length > 2)
+        {
+            Gizmos.color = new Color(1f, 0.5f, 0f); // Turuncu
+            Gizmos.DrawLine(platforms[platforms.Length - 1].position, finish.transform.position);
         }
     }
 }
