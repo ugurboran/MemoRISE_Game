@@ -75,19 +75,20 @@ public class LevelManager : MonoBehaviour
     }
 
     /// <summary>
-    /// LevelData'daki ayarlara gore platformlari olusturur
+    /// LevelData'daki ayarlara gore platformlari zincir seklinde olusturur
+    /// Her platform bir oncekine ziplanabilir mesafede olur
     /// </summary>
     private void GeneratePlatforms()
     {
+        Vector2 currentPosition = currentLevel.playerStartPosition; // Baslangic pozisyonundan basla
+
         for (int i = 0; i < currentLevel.platformCount; i++)
         {
-            // Random pozisyon hesapla (LevelData sinirlari icinde)
-            float randomX = Random.Range(currentLevel.minX, currentLevel.maxX);
-            float randomY = Random.Range(currentLevel.minY, currentLevel.maxY);
-            Vector2 spawnPosition = new Vector2(randomX, randomY);
+            // Bir sonraki platformun pozisyonunu hesapla
+            Vector2 nextPosition = CalculateNextPlatformPosition(currentPosition);
 
             // Platformu olustur
-            GameObject platform = Instantiate(platformPrefab, spawnPosition, Quaternion.identity);
+            GameObject platform = Instantiate(platformPrefab, nextPosition, Quaternion.identity);
             platform.name = $"Platform_{i + 1}";
 
             // PlatformReveal script'ini bul ve ayarlari uygula
@@ -97,15 +98,52 @@ public class LevelManager : MonoBehaviour
                 reveal.revealDuration = currentLevel.revealDuration;
             }
 
-            // Platformu LevelManager altina organize et (Hierarchy'de duzgun gozuksun)
+            // Platformu LevelManager altina organize et
             platform.transform.SetParent(this.transform);
+
+            // Bir sonraki platform icin referans pozisyonu guncelle
+            currentPosition = nextPosition;
         }
 
         if (showDebugLogs)
         {
-            Debug.Log($"  → {currentLevel.platformCount} platform olusturuldu (Gorunme suresi: {currentLevel.revealDuration}s)");
+            Debug.Log($"  → {currentLevel.platformCount} platform zincir seklinde olusturuldu");
         }
     }
+
+    /// <summary>
+    /// Bir onceki platforma gore ziplanabilir mesafede yeni pozisyon hesaplar
+    /// </summary>
+    private Vector2 CalculateNextPlatformPosition(Vector2 previousPosition)
+    {
+        // Ziplanabilir mesafe araliginda random mesafe sec
+        float jumpDistance = Random.Range(currentLevel.minJumpDistance, currentLevel.maxJumpDistance);
+
+        // Yukseklik farki (Y ekseni varyasyonu)
+        float heightDifference = Random.Range(-currentLevel.maxHeightVariation, currentLevel.maxHeightVariation);
+
+        Vector2 nextPosition;
+
+        if (currentLevel.horizontalPath)
+        {
+            // Yatay yol (saga dogru ilerleyen platformlar)
+            nextPosition = new Vector2(
+                previousPosition.x + jumpDistance, // Saga dogru mesafe ekle
+                previousPosition.y + heightDifference // Y'de kucuk varyasyon
+            );
+        }
+        else
+        {
+            // Dikey yol (yukari dogru ilerleyen platformlar)
+            nextPosition = new Vector2(
+                previousPosition.x + heightDifference, // X'de kucuk varyasyon
+                previousPosition.y + jumpDistance // Yukari dogru mesafe ekle
+            );
+        }
+
+        return nextPosition;
+    }
+
     /// <summary>
     /// Finish noktasini LevelData'daki pozisyona konumlandirir
     /// </summary>
@@ -270,5 +308,23 @@ public class LevelManager : MonoBehaviour
 
         ClearCurrentLevel();
         LoadLevel();
+    }
+    /// <summary>
+    /// Scene view'da platformlar arasi baglantilari goster (Debug)
+    /// </summary>
+    private void OnDrawGizmos()
+    {
+        if (!Application.isPlaying) return; // Sadece oyun calisirken
+
+        // LevelManager altindaki tum platformlari al
+        Transform[] platforms = GetComponentsInChildren<Transform>();
+
+        Gizmos.color = Color.yellow;
+
+        // Platformlari sirayla birbirine bagla
+        for (int i = 1; i < platforms.Length - 1; i++)
+        {
+            Gizmos.DrawLine(platforms[i].position, platforms[i + 1].position);
+        }
     }
 }

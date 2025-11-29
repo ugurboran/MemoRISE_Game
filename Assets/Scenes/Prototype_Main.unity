@@ -653,7 +653,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6301677748077106089, guid: 83b9a84dc9e3d494db0969b92174d36d, type: 3}
       propertyPath: jumpForce
-      value: 6
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6301677748077106089, guid: 83b9a84dc9e3d494db0969b92174d36d, type: 3}
       propertyPath: moveSpeed

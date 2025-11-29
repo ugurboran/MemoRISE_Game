@@ -19,11 +19,21 @@ public class LevelData : ScriptableObject
     [Tooltip("Platformlar kaç saniye görünür kalacak")]
     public float revealDuration = 5f;
 
-    [Tooltip("Platformlar arası minimum mesafe")]
-    public float minSpacing = 2f;
+    [Tooltip("Platformlar arası minimum mesafe (zıplanabilir)")]
+    public float minJumpDistance = 2f;
 
-    [Tooltip("Platformlar arası maksimum mesafe")]
-    public float maxSpacing = 4f;
+    [Tooltip("Platformlar arası maksimum mesafe (zıplanabilir)")]
+    public float maxJumpDistance = 4f;
+
+    [Tooltip("Y ekseninde maksimum yükseklik farkı")]
+    public float maxHeightVariation = 2f;
+
+    [Tooltip("Platform yönü (true = sağa, false = yukarı)")]
+    public bool horizontalPath = true;
+
+    /*
+     * 
+    // Silinecek alan ? 
 
     [Header("Alan Sınırları")]
     [Tooltip("Platformların oluşturulacağı X ekseni minimum değeri")]
@@ -37,6 +47,8 @@ public class LevelData : ScriptableObject
 
     [Tooltip("Platformların oluşturulacağı Y ekseni maksimum değeri")]
     public float maxY = 3f;
+
+    */
 
     [Header("Zorluk Ayarları")]
     [Tooltip("Bu seviyeyi tamamlamak için süre limiti var mı?")]
