@@ -1,12 +1,19 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement; // Sahne yonetimi icin
 
 // Bu script, LevelData ScriptableObject'lerini kullanarak seviyeleri yonetir
 // Seviyeleri yukler, platformlari olusturur ve oyun akisini kontrol eder
 public class LevelManager : MonoBehaviour
 {
+
     [Header("Seviye Sistemi")]
-    [Tooltip("Yuklenecek seviye verisi")]
+    [Tooltip("Oyundaki tum seviyeler sirali olarak")]
+    public LevelData[] allLevels; // Tum seviye verileri
+
+    [Tooltip("Yuklenecek seviye verisi (otomatik atanir)")]
     public LevelData currentLevel;
+
+    private int currentLevelIndex = 0; // Su anki seviye indexi
 
     [Header("Prefab Referanslari")]
     [Tooltip("Platform prefab referansi")]
@@ -23,10 +30,10 @@ public class LevelManager : MonoBehaviour
 
     private void Start()
     {
-        // Seviye verisi kontrol
-        if (currentLevel == null)
+        // Seviye dizisi kontrol
+        if (allLevels == null || allLevels.Length == 0)
         {
-            Debug.LogError("LevelManager: currentLevel atanmamis! Inspector'dan bir LevelData ata.");
+            Debug.LogError("LevelManager: allLevels dizisi bos! Inspector'dan seviyeleri ata.");
             return;
         }
 
@@ -36,7 +43,9 @@ public class LevelManager : MonoBehaviour
             return;
         }
 
-        // Seviyeyi yukle
+        // Ilk seviyeyi yukle
+        currentLevelIndex = 0;
+        currentLevel = allLevels[currentLevelIndex];
         LoadLevel();
     }
 
@@ -55,6 +64,9 @@ public class LevelManager : MonoBehaviour
 
         // Oyuncuyu baslangic pozisyonuna tasi
         PositionPlayer();
+
+        // Finish noktasini konumlandir
+        PositionFinishPoint();
 
         if (showDebugLogs)
         {
@@ -92,6 +104,28 @@ public class LevelManager : MonoBehaviour
         if (showDebugLogs)
         {
             Debug.Log($"  → {currentLevel.platformCount} platform olusturuldu (Gorunme suresi: {currentLevel.revealDuration}s)");
+        }
+    }
+    /// <summary>
+    /// Finish noktasini LevelData'daki pozisyona konumlandirir
+    /// </summary>
+    private void PositionFinishPoint()
+    {
+        // Sahnede Finish tag'li obje bul
+        GameObject finishPoint = GameObject.FindGameObjectWithTag("Finish");
+
+        if (finishPoint != null)
+        {
+            finishPoint.transform.position = currentLevel.finishPosition;
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"  → Finish noktasi konumlandirildi: {currentLevel.finishPosition}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("LevelManager: Finish tag'li obje bulunamadi!");
         }
     }
 
@@ -158,5 +192,83 @@ public class LevelManager : MonoBehaviour
         {
             Debug.Log("  → Onceki seviye temizlendi.");
         }
+    }
+    /// <summary>
+    /// Seviye tamamlandiginda cagrilir (FinishPoint tarafindan)
+    /// </summary>
+    public void OnLevelComplete()
+    {
+        if (showDebugLogs)
+        {
+            Debug.Log($"🎉 {currentLevel.levelName} tamamlandi!");
+        }
+
+        // Bir sonraki seviyeye gec
+        LoadNextLevel();
+    }
+
+    /// <summary>
+    /// Bir sonraki seviyeyi yukler
+    /// </summary>
+    private void LoadNextLevel()
+    {
+        currentLevelIndex++; // Index'i artir
+
+        // Tum seviyeler tamamlandiysa
+        if (currentLevelIndex >= allLevels.Length)
+        {
+            if (showDebugLogs)
+            {
+                Debug.Log("🏆 TUM SEVIYELER TAMAMLANDI!");
+            }
+
+            // Oyunu yeniden baslat veya baska bir islem yap
+            RestartGame();
+            return;
+        }
+
+        // Sonraki seviyeyi yukle
+        currentLevel = allLevels[currentLevelIndex];
+
+        if (showDebugLogs)
+        {
+            Debug.Log($"→ Sonraki seviye yukleniyor: {currentLevel.levelName}");
+        }
+
+        // Eski seviyeyi temizle ve yenisini yukle
+        ClearCurrentLevel();
+        LoadLevel();
+    }
+
+    /// <summary>
+    /// Oyunu yeniden baslatir (ilk seviyeden)
+    /// </summary>
+    private void RestartGame()
+    {
+        if (showDebugLogs)
+        {
+            Debug.Log("🔄 Oyun yeniden baslatiliyor...");
+        }
+
+        // Mevcut sahneyi yeniden yukle
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    /// <summary>
+    /// Belirli bir seviyeyi yukler (opsiyonel - UI'dan kullanilabilir)
+    /// </summary>
+    public void LoadSpecificLevel(int levelIndex)
+    {
+        if (levelIndex < 0 || levelIndex >= allLevels.Length)
+        {
+            Debug.LogError($"LevelManager: Gecersiz level index: {levelIndex}");
+            return;
+        }
+
+        currentLevelIndex = levelIndex;
+        currentLevel = allLevels[currentLevelIndex];
+
+        ClearCurrentLevel();
+        LoadLevel();
     }
 }
