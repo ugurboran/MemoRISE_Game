@@ -319,9 +319,6 @@ public class LevelManager : MonoBehaviour
             Debug.Log("  → Onceki seviye temizlendi.");
         }
     }
-    /// <summary>
-    /// Seviye tamamlandiginda cagrilir (FinishPoint tarafindan)
-    /// </summary>
     public void OnLevelComplete()
     {
         Debug.Log($"[LevelManager] OnLevelComplete() cagirildi!");
@@ -338,12 +335,7 @@ public class LevelManager : MonoBehaviour
             gameUI.ShowLevelCompletePanel();
         }
 
-        // 2 saniye sonra bir sonraki seviyeye gec
-        Invoke(nameof(LoadNextLevel), 2f);
-
-        // Bir sonraki seviyeye gec
-        //Debug.Log("[LevelManager] LoadNextLevel() cagiriliyor...");
-        //LoadNextLevel();
+        // Buton control ediyor, otomatik gecis YOK
     }
 
     /// <summary>
@@ -561,6 +553,15 @@ public class LevelManager : MonoBehaviour
     public int GetTotalDeaths()
     {
         return deathCount;
+    }
+
+    /// <summary>
+    /// UI'dan cagirilir - bir sonraki seviyeye gecer
+    /// </summary>
+    public void LoadNextLevelFromUI()
+    {
+        Debug.Log("[LevelManager] UI'dan LoadNextLevel cagirildi.");
+        LoadNextLevel();
     }
 
     /// <summary>

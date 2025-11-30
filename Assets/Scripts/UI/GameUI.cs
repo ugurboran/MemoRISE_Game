@@ -207,7 +207,11 @@ public class GameUI : MonoBehaviour
         // Oyunu devam ettir
         Time.timeScale = 1f;
 
-        // Bir sonraki seviyeyi yukle (LevelManager zaten hallediyor)
+        // Bir sonraki seviyeyi yukle
+        if (levelManager != null)
+        {
+            levelManager.LoadNextLevelFromUI();
+        }
     }
 
     /// <summary>
