@@ -21,6 +21,8 @@ public class LevelManager : MonoBehaviour
 
     private Vector2 lastPlatformPosition; // Son platformun pozisyonunu tutar
 
+    private GameUI gameUI; // GameUI referansi
+
     [Header("Prefab Referanslari")]
     [Tooltip("Platform prefab referansi")]
     public GameObject platformPrefab;
@@ -36,6 +38,9 @@ public class LevelManager : MonoBehaviour
 
     private void Start()
     {
+        // GameUI'i bul
+        gameUI = FindFirstObjectByType<GameUI>();
+
         // Seviye dizisi kontrol
         if (allLevels == null || allLevels.Length == 0)
         {
@@ -111,6 +116,12 @@ public class LevelManager : MonoBehaviour
 
         // Death Zone'u ayarla
         SetupDeathZone();
+
+        // UI'i guncelle
+        if (gameUI != null)
+        {
+            gameUI.UpdateUI();
+        }
     }
 
     /// <summary>
@@ -321,9 +332,18 @@ public class LevelManager : MonoBehaviour
             Debug.Log($"🎉 {currentLevel.levelName} tamamlandi!");
         }
 
+        // UI'da Level Complete panel'ini goster
+        if (gameUI != null)
+        {
+            gameUI.ShowLevelCompletePanel();
+        }
+
+        // 2 saniye sonra bir sonraki seviyeye gec
+        Invoke(nameof(LoadNextLevel), 2f);
+
         // Bir sonraki seviyeye gec
-        Debug.Log("[LevelManager] LoadNextLevel() cagiriliyor...");
-        LoadNextLevel();
+        //Debug.Log("[LevelManager] LoadNextLevel() cagiriliyor...");
+        //LoadNextLevel();
     }
 
     /// <summary>
@@ -528,6 +548,22 @@ public class LevelManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Mevcut seviyedeki olum sayisini dondurur (UI icin)
+    /// </summary>
+    public int GetCurrentLevelDeaths()
+    {
+        return currentLevelDeathCount;
+    }
+
+    /// <summary>
+    /// Toplam olum sayisini dondurur (UI icin)
+    /// </summary>
+    public int GetTotalDeaths()
+    {
+        return deathCount;
+    }
+
+    /// <summary>
     /// Scene view'da platformlar arasi baglantilari ve ozel noktalari goster (Debug)
     /// </summary>
     private void OnDrawGizmos()
@@ -603,4 +639,6 @@ public class LevelManager : MonoBehaviour
         SaveManager.ResetLevelProgress();
         Debug.Log("✅ Seviye ilerlemesi sifirlandi!");
     }
+
+
 }
