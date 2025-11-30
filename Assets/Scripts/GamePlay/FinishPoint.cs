@@ -39,7 +39,7 @@ public class FinishPoint : MonoBehaviour
             Debug.Log("[FinishPoint] LevelManager araniyor...");
 
             // LevelManager'i bul ve seviye tamamlandigini bildir
-            LevelManager levelManager = FindObjectOfType<LevelManager>();
+            LevelManager levelManager = FindFirstObjectByType<LevelManager>();
             if (levelManager != null)
             {
                 Debug.Log("[FinishPoint] LevelManager bulundu, OnLevelComplete() cagiriliyor...");

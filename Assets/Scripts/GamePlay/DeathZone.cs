@@ -57,7 +57,7 @@ public class DeathZone : MonoBehaviour
         }
 
         // LevelManager'i bul ve seviyeyi yeniden baslat
-        LevelManager levelManager = FindObjectOfType<LevelManager>();
+        LevelManager levelManager = FindFirstObjectByType<LevelManager>();
         if (levelManager != null)
         {
             levelManager.RestartCurrentLevel();

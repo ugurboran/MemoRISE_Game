@@ -49,8 +49,35 @@ public class LevelManager : MonoBehaviour
             return;
         }
 
-        // Ilk seviyeyi yukle
-        currentLevelIndex = 0;
+        // Kaydedilen seviyeyi yukle (eger varsa)
+        if (SaveManager.HasSaveData())
+        {
+            currentLevelIndex = SaveManager.LoadCurrentLevel();
+            currentLevelDeathCount = SaveManager.LoadCurrentLevelDeaths();
+            deathCount = SaveManager.LoadTotalDeaths();
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"[LevelManager] Kayitli veri yuklendi:");
+                Debug.Log($"  → Seviye Index: {currentLevelIndex}");
+                Debug.Log($"  → Bu seviyede olum: {currentLevelDeathCount}");
+                Debug.Log($"  → Toplam olum: {deathCount}");
+            }
+        }
+        else
+        {
+            // Ilk kez oynuyorsa
+            currentLevelIndex = 0;
+            currentLevelDeathCount = 0;
+            deathCount = 0;
+
+            if (showDebugLogs)
+            {
+                Debug.Log("[LevelManager] Ilk kez oynuyor, yeni oyun baslatiliyor.");
+            }
+        }
+
+        // Seviye yukleme
         currentLevel = allLevels[currentLevelIndex];
         LoadLevel();
     }
@@ -331,6 +358,16 @@ public class LevelManager : MonoBehaviour
         // Sonraki seviyeyi yukle
         currentLevel = allLevels[currentLevelIndex];
 
+        // Sonraki seviyeyi yukle
+        currentLevel = allLevels[currentLevelIndex];
+
+        // Yeni seviyeyi kaydet
+        SaveManager.SaveCurrentLevel(currentLevelIndex);
+
+        // Yeni seviye icin olum sayacini sifirla
+        currentLevelDeathCount = 0;
+        SaveManager.SaveCurrentLevelDeaths(0);
+
         Debug.Log($"[LevelManager] Sonraki seviye secildi: {currentLevel.levelName}");
 
         if (showDebugLogs)
@@ -353,13 +390,18 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     public void RestartCurrentLevel()
     {
-        deathCount++; // Eger olum sayaci eklediysen
-        currentLevelDeathCount++; // Eger olum sayaci eklediysen
+        deathCount++;
+        currentLevelDeathCount++;
+
+        // Sayaclari kaydet (sahne yeniden yuklenince kaybolmasin)
+        SaveManager.SaveCurrentLevel(currentLevelIndex);
+        SaveManager.SaveCurrentLevelDeaths(currentLevelDeathCount);
+        SaveManager.SaveTotalDeaths(deathCount);
 
         if (showDebugLogs)
         {
             Debug.Log($"💀 Toplam Olum: {deathCount}, Bu Seviyede: {currentLevelDeathCount}");
-            Debug.Log($"🔄 {currentLevel.levelName} yeniden baslatiliyor (sahne yeniden yukleniyor)...");
+            Debug.Log($"🔄 {currentLevel.levelName} yeniden baslatiliyor...");
         }
 
         // Mevcut sahneyi yeniden yukle (her sey sifirlanir)
@@ -381,7 +423,7 @@ public class LevelManager : MonoBehaviour
         LoadLevel();
 
         // DeathZone'u sifirla
-        DeathZone deathZone = FindObjectOfType<DeathZone>();
+        DeathZone deathZone = FindFirstObjectByType<DeathZone>();
         if (deathZone != null)
         {
             deathZone.ResetDeathZone();
@@ -413,6 +455,10 @@ public class LevelManager : MonoBehaviour
         {
             Debug.Log("🔄 Oyun yeniden baslatiliyor...");
         }
+
+        // Tum ilerlemeyi sifirla
+        SaveManager.ResetLevelProgress();
+        SaveManager.ResetDeathCounts();
 
         // Mevcut sahneyi yeniden yukle
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
@@ -467,7 +513,7 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     private void SetupDeathZone()
     {
-        DeathZone deathZone = FindObjectOfType<DeathZone>();
+        DeathZone deathZone = FindFirstObjectByType<DeathZone>();
 
         if (deathZone != null)
         {
@@ -528,5 +574,33 @@ public class LevelManager : MonoBehaviour
             Gizmos.color = new Color(1f, 0.5f, 0f);
             Gizmos.DrawLine(platforms[platforms.Length - 1].position, finish.transform.position);
         }
+    }
+
+    // === DEBUG MENU (Unity Editor'de) ===
+
+    [ContextMenu("Kayitlari Goruntule")]
+    private void DebugShowSaveData()
+    {
+        Debug.Log("=== KAYITLI VERILER ===");
+        Debug.Log($"Seviye Index: {SaveManager.LoadCurrentLevel()}");
+        Debug.Log($"Bu Seviyede Olum: {SaveManager.LoadCurrentLevelDeaths()}");
+        Debug.Log($"Toplam Olum: {SaveManager.LoadTotalDeaths()}");
+        Debug.Log($"Master Volume: {SaveManager.LoadMasterVolume()}");
+        Debug.Log($"Has Save Data: {SaveManager.HasSaveData()}");
+    }
+
+    [ContextMenu("Tum Kayitlari Sil")]
+    private void DebugDeleteAllSaves()
+    {
+        SaveManager.DeleteAllSaveData();
+        Debug.Log("✅ Tum kayitlar silindi! Oyun yeniden baslatiliyor...");
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    [ContextMenu("Ilerlemeyi Sifirla (Olum sayaclari koru)")]
+    private void DebugResetProgress()
+    {
+        SaveManager.ResetLevelProgress();
+        Debug.Log("✅ Seviye ilerlemesi sifirlandi!");
     }
 }
