@@ -60,8 +60,8 @@ public class LevelData : ScriptableObject
     [Tooltip("Süre limiti (saniye)")]
     public float timeLimit = 60f;
 
-    [Tooltip("Oyuncunun başlangıç pozisyonu")]
-    public Vector2 playerStartPosition = new Vector2(-5f, 0f);
+    [Tooltip("İlk platformun başlangıç pozisyonu (World space)")]
+    public Vector2 firstPlatformPosition = new Vector2(0f, 0f);
 
     [Tooltip("Finish Point son platformdan ne kadar uzakta olacak (X, Y offset)")]
     public Vector2 finishOffsetFromLastPlatform = new Vector2(0f, 0f);

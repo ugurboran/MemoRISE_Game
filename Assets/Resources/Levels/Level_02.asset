@@ -23,5 +23,5 @@ MonoBehaviour:
   horizontalPath: 1
   hasTimeLimit: 0
   timeLimit: 60
-  playerStartPosition: {x: -5, y: 1}
-  finishOffsetFromLastPlatform: {x: 0, y: 0}
+  firstPlatformPosition: {x: 0, y: 0}
+  finishOffsetFromLastPlatform: {x: 1, y: 0}

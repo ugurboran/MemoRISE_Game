@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement; // Sahne yonetimi icin
 // Seviyeleri yukler, platformlari olusturur ve oyun akisini kontrol eder
 public class LevelManager : MonoBehaviour
 {
+    private Vector2 firstPlatformPosition; // Ilk platformun pozisyonu (Player icin)
     
 
     [Header("Seviye Sistemi")]
@@ -79,12 +80,12 @@ public class LevelManager : MonoBehaviour
 
     /// <summary>
     /// LevelData'daki ayarlara gore platformlari zincir seklinde olusturur
-    /// Ilk platform Player'dan ziplanabilir mesafede baslar
+    /// Ilk platform LevelData'daki pozisyondan baslar
     /// </summary>
     private void GeneratePlatforms()
     {
-        // ILK PLATFORM: Player'dan ziplanabilir mesafede olustur
-        Vector2 firstPlatformPosition = CalculateFirstPlatformPosition();
+        // ILK PLATFORM: LevelData'daki pozisyonda olustur
+        firstPlatformPosition = currentLevel.firstPlatformPosition;
 
         GameObject firstPlatform = Instantiate(platformPrefab, firstPlatformPosition, Quaternion.identity);
         firstPlatform.name = "Platform_1";
@@ -131,39 +132,6 @@ public class LevelManager : MonoBehaviour
             Debug.Log($"  → {currentLevel.platformCount} platform zincir seklinde olusturuldu");
             Debug.Log($"  → Ilk platform: {firstPlatformPosition}, Son platform: {lastPlatformPosition}");
         }
-    }
-
-    /// <summary>
-    /// Player'dan ziplanabilir mesafede ilk platformun pozisyonunu hesaplar
-    /// </summary>
-    private Vector2 CalculateFirstPlatformPosition()
-    {
-        // Ilk platform icin SABIT, ziplanabilir mesafe kullan
-        float jumpDistance = currentLevel.firstPlatformDistance;
-
-        // Y ekseninde kucuk varyasyon (cok fazla yukari/asagi olmasin)
-        float heightDifference = Random.Range(-0.5f, 0.5f);
-
-        Vector2 firstPosition;
-
-        if (currentLevel.horizontalPath)
-        {
-            // Yatay yol: Player'in saginda
-            firstPosition = new Vector2(
-                currentLevel.playerStartPosition.x + jumpDistance,
-                currentLevel.playerStartPosition.y + heightDifference
-            );
-        }
-        else
-        {
-            // Dikey yol: Player'in ustunde
-            firstPosition = new Vector2(
-                currentLevel.playerStartPosition.x + heightDifference,
-                currentLevel.playerStartPosition.y + jumpDistance
-            );
-        }
-
-        return firstPosition;
     }
 
     /// <summary>
@@ -232,32 +200,35 @@ public class LevelManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Oyuncuyu LevelData'daki baslangic pozisyonuna tasir
+    /// Oyuncuyu ilk platformun uzerine yerlestirir
     /// </summary>
     private void PositionPlayer()
     {
         // Sahnede var olan Player'i bul
         GameObject existingPlayer = GameObject.FindGameObjectWithTag("Player");
 
+        // Ilk platformun 1 birim uzerinde spawn pozisyonu
+        Vector2 playerSpawnPosition = firstPlatformPosition + new Vector2(0f, 1f);
+
         if (existingPlayer != null)
         {
-            existingPlayer.transform.position = currentLevel.playerStartPosition;
+            existingPlayer.transform.position = playerSpawnPosition;
             playerInstance = existingPlayer;
 
             if (showDebugLogs)
             {
-                Debug.Log($"  → Oyuncu baslangic pozisyonuna tasindi: {currentLevel.playerStartPosition}");
+                Debug.Log($"  → Oyuncu ilk platformun uzerine tasindi: {playerSpawnPosition}");
             }
         }
         else if (playerPrefab != null)
         {
             // Sahnede Player yoksa ve prefab atanmissa, olustur
-            playerInstance = Instantiate(playerPrefab, currentLevel.playerStartPosition, Quaternion.identity);
+            playerInstance = Instantiate(playerPrefab, playerSpawnPosition, Quaternion.identity);
             playerInstance.name = "Player";
 
             if (showDebugLogs)
             {
-                Debug.Log($"  → Oyuncu olusturuldu: {currentLevel.playerStartPosition}");
+                Debug.Log($"  → Oyuncu ilk platformun uzerine olusturuldu: {playerSpawnPosition}");
             }
         }
         else
@@ -398,19 +369,18 @@ public class LevelManager : MonoBehaviour
         LoadLevel();
     }
 
-    
+
 
     /// <summary>
     /// Scene view'da platformlar arasi baglantilari ve ozel noktalari goster (Debug)
     /// </summary>
     private void OnDrawGizmos()
     {
-        if (!Application.isPlaying) return; // Sadece oyun calisirken
+        if (!Application.isPlaying) return;
 
-        // LevelManager altindaki tum platformlari al
         Transform[] platforms = GetComponentsInChildren<Transform>();
 
-        if (platforms.Length <= 1) return; // LevelManager'in kendisi haric platform yoksa
+        if (platforms.Length <= 1) return;
 
         // Platformlar arasi baglanti cizgileri (Sari)
         Gizmos.color = Color.yellow;
@@ -433,19 +403,19 @@ public class LevelManager : MonoBehaviour
             Gizmos.DrawWireSphere(platforms[platforms.Length - 1].position, 0.8f);
         }
 
-        // PLAYER → ILK PLATFORM baglantisi (Mavi)
+        // PLAYER pozisyonu (Mavi nokta)
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null && platforms.Length > 1)
+        if (player != null)
         {
             Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(player.transform.position, platforms[1].position);
+            Gizmos.DrawWireSphere(player.transform.position, 0.6f);
         }
 
         // SON PLATFORM → FINISH baglantisi (Turuncu)
         GameObject finish = GameObject.FindGameObjectWithTag("Finish");
         if (finish != null && platforms.Length > 2)
         {
-            Gizmos.color = new Color(1f, 0.5f, 0f); // Turuncu
+            Gizmos.color = new Color(1f, 0.5f, 0f);
             Gizmos.DrawLine(platforms[platforms.Length - 1].position, finish.transform.position);
         }
     }
