@@ -25,3 +25,7 @@ MonoBehaviour:
   timeLimit: 60
   firstPlatformPosition: {x: 0, y: 0}
   finishOffsetFromLastPlatform: {x: 1, y: 0}
+  deathY: -8
+  useCameraBounds: 0
+  cameraBoundsX: {x: -10, y: 50}
+  cameraBoundsY: {x: -10, y: 10}

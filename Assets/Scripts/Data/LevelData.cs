@@ -66,6 +66,9 @@ public class LevelData : ScriptableObject
     [Tooltip("Finish Point son platformdan ne kadar uzakta olacak (X, Y offset)")]
     public Vector2 finishOffsetFromLastPlatform = new Vector2(0f, 0f);
 
+    [Tooltip("Oyuncu bu Y seviyesinin altina dusmesi durumunda olur")]
+    public float deathY = -10f;
+
     [Header("Kamera Ayarlari")]
     [Tooltip("Kamera sinirlari kullanilsin mi?")]
     public bool useCameraBounds = false;

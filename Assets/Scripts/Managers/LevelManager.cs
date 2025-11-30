@@ -6,7 +6,9 @@ using UnityEngine.SceneManagement; // Sahne yonetimi icin
 public class LevelManager : MonoBehaviour
 {
     private Vector2 firstPlatformPosition; // Ilk platformun pozisyonu (Player icin)
-    
+
+    private int deathCount = 0; // Toplam olum sayisi
+    private int currentLevelDeathCount = 0; // Bu seviyedeki olum sayisi
 
     [Header("Seviye Sistemi")]
     [Tooltip("Oyundaki tum seviyeler sirali olarak")]
@@ -79,6 +81,9 @@ public class LevelManager : MonoBehaviour
 
         // Kamera sınırlarını ayarla
         SetupCameraBounds();
+
+        // Death Zone'u ayarla
+        SetupDeathZone();
     }
 
     /// <summary>
@@ -299,7 +304,10 @@ public class LevelManager : MonoBehaviour
     /// </summary>
     private void LoadNextLevel()
     {
+
         Debug.Log($"[LevelManager] LoadNextLevel() baslatildi. Mevcut index: {currentLevelIndex}");
+
+        currentLevelDeathCount = 0; // Yeni seviye icin olum sayacini sifirla
 
         currentLevelIndex++; // Index'i artir
 
@@ -338,6 +346,62 @@ public class LevelManager : MonoBehaviour
         LoadLevel();
 
         Debug.Log("[LevelManager] Seviye gecisi tamamlandi!");
+    }
+
+    /// <summary>
+    /// Mevcut seviyeyi yeniden baslatir (olum durumunda)
+    /// </summary>
+    public void RestartCurrentLevel()
+    {
+        deathCount++; // Eger olum sayaci eklediysen
+        currentLevelDeathCount++; // Eger olum sayaci eklediysen
+
+        if (showDebugLogs)
+        {
+            Debug.Log($"💀 Toplam Olum: {deathCount}, Bu Seviyede: {currentLevelDeathCount}");
+            Debug.Log($"🔄 {currentLevel.levelName} yeniden baslatiliyor (sahne yeniden yukleniyor)...");
+        }
+
+        // Mevcut sahneyi yeniden yukle (her sey sifirlanir)
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    /// <summary>
+    /// Belirtilen sure sonra seviyeyi yeniden baslatir
+    /// </summary>
+    private System.Collections.IEnumerator RestartAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+
+        // Mevcut seviyeyi temizle
+        ClearCurrentLevel();
+
+        // Ayni seviyeyi yeniden yukle
+        LoadLevel();
+
+        // DeathZone'u sifirla
+        DeathZone deathZone = FindObjectOfType<DeathZone>();
+        if (deathZone != null)
+        {
+            deathZone.ResetDeathZone();
+        }
+
+        // FinishPoint'i sifirla
+        GameObject finishPoint = GameObject.FindGameObjectWithTag("Finish");
+        if (finishPoint != null)
+        {
+            FinishPoint finishScript = finishPoint.GetComponent<FinishPoint>();
+            if (finishScript != null)
+            {
+                finishScript.ResetFinishPoint();
+            }
+        }
+
+        if (showDebugLogs)
+        {
+            Debug.Log($"✅ {currentLevel.levelName} yeniden baslatildi.");
+        }
     }
 
     /// <summary>
@@ -395,6 +459,25 @@ public class LevelManager : MonoBehaviour
         else if (cameraFollow != null)
         {
             cameraFollow.useBounds = false;
+        }
+    }
+
+    /// <summary>
+    /// Death Zone'u LevelData'ya gore ayarlar
+    /// </summary>
+    private void SetupDeathZone()
+    {
+        DeathZone deathZone = FindObjectOfType<DeathZone>();
+
+        if (deathZone != null)
+        {
+            deathZone.deathY = currentLevel.deathY;
+            deathZone.ResetDeathZone();
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"  → Death Zone ayarlandi: Y = {currentLevel.deathY}");
+            }
         }
     }
 
