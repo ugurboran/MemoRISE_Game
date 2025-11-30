@@ -76,6 +76,9 @@ public class LevelManager : MonoBehaviour
         {
             Debug.Log($"✅ {currentLevel.levelName} basariyla yuklendi!");
         }
+
+        // Kamera sınırlarını ayarla
+        SetupCameraBounds();
     }
 
     /// <summary>
@@ -369,7 +372,31 @@ public class LevelManager : MonoBehaviour
         LoadLevel();
     }
 
+    /// <summary>
+    /// Kamera sınırlarını LevelData'ya göre ayarlar
+    /// </summary>
+    private void SetupCameraBounds()
+    {
+        CameraFollow cameraFollow = Camera.main.GetComponent<CameraFollow>();
 
+        if (cameraFollow != null && currentLevel.useCameraBounds)
+        {
+            cameraFollow.useBounds = true;
+            cameraFollow.minX = currentLevel.cameraBoundsX.x;
+            cameraFollow.maxX = currentLevel.cameraBoundsX.y;
+            cameraFollow.minY = currentLevel.cameraBoundsY.x;
+            cameraFollow.maxY = currentLevel.cameraBoundsY.y;
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"  → Kamera sinirlari ayarlandi: X({cameraFollow.minX}, {cameraFollow.maxX}), Y({cameraFollow.minY}, {cameraFollow.maxY})");
+            }
+        }
+        else if (cameraFollow != null)
+        {
+            cameraFollow.useBounds = false;
+        }
+    }
 
     /// <summary>
     /// Scene view'da platformlar arasi baglantilari ve ozel noktalari goster (Debug)

@@ -65,4 +65,14 @@ public class LevelData : ScriptableObject
 
     [Tooltip("Finish Point son platformdan ne kadar uzakta olacak (X, Y offset)")]
     public Vector2 finishOffsetFromLastPlatform = new Vector2(0f, 0f);
+
+    [Header("Kamera Ayarlari")]
+    [Tooltip("Kamera sinirlari kullanilsin mi?")]
+    public bool useCameraBounds = false;
+
+    [Tooltip("Kamera min/max X sinirlari")]
+    public Vector2 cameraBoundsX = new Vector2(-10f, 50f);
+
+    [Tooltip("Kamera min/max Y sinirlari")]
+    public Vector2 cameraBoundsY = new Vector2(-10f, 10f);
 }
